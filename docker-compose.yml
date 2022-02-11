@@ -1,0 +1,46 @@
+version:  '3.7'
+
+services:
+  db:
+    container_name: database
+    image: postgres:10.5
+
+    environment:
+      - POSTGRES_DB=$DB_NAME
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASS
+    restart: always
+    networks:
+      - botnet
+    env_file:
+      - ".env"
+    volumes:
+      - ./postgres:/var/lib/postgresql
+
+  redis:
+    image: 'bitnami/redis:latest'
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    networks:
+      - botnet
+
+  tgbot:
+    container_name: bot
+    build:
+      context: .
+    command: python app.py
+    networks:
+      - botnet
+    restart: always
+    env_file:
+      - ".env"
+    volumes:
+      - .:/src
+    depends_on:
+      - db
+      - redis
+
+
+networks:
+  botnet:
+    driver: bridge
